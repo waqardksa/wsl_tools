@@ -239,6 +239,70 @@ _restart_nginx_php
 
 }
 
+function change_max_time_menu () {
+
+    echo -ne "
+$(pTan '== This change max_execution_time, max_input_time in PHP.ini for All versions ==')
+"
+
+    echo -ne "
+$(pTan 'Type the execution and input time in seconds ')
+"
+read time
+
+change_max_time $time
+}
+
+function change_max_time () {
+    
+        
+rm -f /etc/nginx/conf.d/limits.conf
+
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/8.2/fpm/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/8.2/cli/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/8.2/fpm/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/8.2/cli/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/8.1/fpm/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/8.1/cli/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/8.1/fpm/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/8.1/cli/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/8.0/fpm/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/8.0/cli/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/8.0/fpm/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/8.0/cli/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/7.4/fpm/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/7.4/cli/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/7.4/fpm/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/7.4/cli/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/7.3/fpm/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/7.3/cli/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/7.3/fpm/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/7.3/cli/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/7.2/fpm/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/7.2/cli/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/7.2/fpm/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/7.2/cli/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/7.1/fpm/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/7.1/cli/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/7.1/fpm/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/7.1/cli/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/7.0/fpm/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/7.0/cli/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/7.0/fpm/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/7.0/cli/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/5.6/fpm/php.ini
+sudo sed -i "s/max_execution_time = .*/max_execution_time = $time/" /etc/php/5.6/cli/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/5.6/fpm/php.ini
+sudo sed -i "s/max_input_time = .*/max_input_time = $time/" /etc/php/5.6/cli/php.ini
+
+_success "Sizes in PHP.ini files & Nginx CHANGED SUCCESSFULLY to $(pRed $size)"
+
+_arrow "Restarting Nginx and PHP"
+
+_restart_nginx_php
+
+}
+
 
 
 
@@ -250,6 +314,7 @@ $(_underline '### PHP Tools  ###')
 $(pGreen '(1)') Change PHP CLI Version
 $(pGreen '(2)') Change PHP Version for vHost
 $(pGreen '(3)') Update MAX POST/UPLOAD Size in PHP.ini
+$(pGreen '(4)') Update MAX EXUCATION and INPUT TIME in PHP.ini
 
 $(pGreen '(0)') << Go Back to MainMenu
 -----------------------------------
@@ -259,6 +324,7 @@ $(pBlue ':: PHPTools :: Choose an option:') "
 	        1) change_cli_menu ; menu ;;
 	        2) change_vhost_menu ; menu ;;
 	        3) change_values_menu ; menu ;;
+	        4) change_max_time_menu ; menu ;;
 		    0) exit 0 ;;
 		    *) _error "Wrong Choice !!"; menu;;
         esac
