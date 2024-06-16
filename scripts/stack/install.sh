@@ -139,6 +139,8 @@ function continue_install() {
 
 #Auto Starting services
 sudo /etc/init.d/nginx start
+sudo /etc/init.d/php8.4-fpm start
+sudo /etc/init.d/php8.3-fpm start
 sudo /etc/init.d/php8.2-fpm start
 sudo /etc/init.d/php8.1-fpm start
 sudo /etc/init.d/php8.0-fpm start
@@ -156,6 +158,8 @@ FOE
 		_info "Removing Password Requirements from Services"
 
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/nginx' | sudo EDITOR='tee -a' visudo
+		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.4-fpm' | sudo EDITOR='tee -a' visudo
+		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.3-fpm' | sudo EDITOR='tee -a' visudo
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.2-fpm' | sudo EDITOR='tee -a' visudo
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.1-fpm' | sudo EDITOR='tee -a' visudo
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.0-fpm' | sudo EDITOR='tee -a' visudo
@@ -174,6 +178,24 @@ FOE
 	else
 		_info "Blank or User $user_reloader Not Found, Moving On ..."
 	fi
+
+	_info "Installing PHP $(pGreen 8.4) with Extensions"
+
+	apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y --force-yes php8.4-cli php8.4-fpm php8.4-dev \
+		php8.4-pgsql php8.4-sqlite3 php8.4-gd \
+		php8.4-curl php8.4-memcached \
+		php8.4-imap php8.4-mysql php8.4-mbstring \
+		php8.4-xml php8.4-zip php8.4-bcmath php8.4-soap \
+		php8.4-intl php8.4-readline php8.4-msgpack php8.4-igbinary php8.4-gmp php8.4-redis
+
+	_info "Installing PHP $(pGreen 8.3) with Extensions"
+
+	apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y --force-yes php8.3-cli php8.3-fpm php8.3-dev \
+		php8.3-pgsql php8.3-sqlite3 php8.3-gd \
+		php8.3-curl php8.3-memcached \
+		php8.3-imap php8.3-mysql php8.3-mbstring \
+		php8.3-xml php8.3-zip php8.3-bcmath php8.3-soap \
+		php8.3-intl php8.3-readline php8.3-msgpack php8.3-igbinary php8.3-gmp php8.3-redis
 
 	_info "Installing PHP $(pGreen 8.2) with Extensions"
 
@@ -266,6 +288,18 @@ FOE
 
 	_info "Doing Misc. PHP CLI Configuration"
 
+	sudo sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.4/cli/php.ini
+	sudo sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.4/cli/php.ini
+	sudo sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.4/cli/php.ini
+	sudo sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.4/cli/php.ini
+	sudo sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.4/cli/php.ini
+
+	sudo sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.3/cli/php.ini
+	sudo sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.3/cli/php.ini
+	sudo sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.3/cli/php.ini
+	sudo sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.3/cli/php.ini
+	sudo sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.3/cli/php.ini
+
 	sudo sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.2/cli/php.ini
 	sudo sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.2/cli/php.ini
 	sudo sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.2/cli/php.ini
@@ -324,6 +358,8 @@ FOE
 
 	apt-get install -y --force-yes libmagickwand-dev
 
+	echo "extension=imagick.so" >/etc/php/8.4/mods-available/imagick.ini
+	echo "extension=imagick.so" >/etc/php/8.3/mods-available/imagick.ini
 	echo "extension=imagick.so" >/etc/php/8.2/mods-available/imagick.ini
 	echo "extension=imagick.so" >/etc/php/8.1/mods-available/imagick.ini
 	echo "extension=imagick.so" >/etc/php/8.0/mods-available/imagick.ini
@@ -341,15 +377,27 @@ FOE
 	chmod 733 /var/lib/php/sessions
 	chmod +t /var/lib/php/sessions
 
-	_info "Making PHP $(pGreen '8.2') default in CLI"
+	_info "Making PHP $(pGreen '8.4') default in CLI"
 
-	sudo update-alternatives --set php /usr/bin/php8.2
+	sudo update-alternatives --set php /usr/bin/php8.4
 
 	_info "Enough of PHP Stuff, Now Installing $(pGreen 'NGINX')"
 
 	apt-get install -y --force-yes nginx
 
 	_info "Tweaking Some PHP-FPM Settings"
+
+	sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.4/fpm/php.ini
+	sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.4/fpm/php.ini
+	sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.4/fpm/php.ini
+	sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.4/fpm/php.ini
+	sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.4/fpm/php.ini
+
+	sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.3/fpm/php.ini
+	sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.3/fpm/php.ini
+	sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.3/fpm/php.ini
+	sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.3/fpm/php.ini
+	sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.3/fpm/php.ini
 
 	sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.2/fpm/php.ini
 	sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.2/fpm/php.ini
@@ -470,16 +518,26 @@ FOE
 	# func from utilities
 	_restart_nginx_php
 
-	_info "Installing NodeJS, NPM, Yarn"
+	_info "Installing NodeJS, NPM, Yarn using NVM"
 
+	# Ensure apt-get is ready to use
 	apt_wait
 
-	curl --silent --location https://deb.nodesource.com/setup_20.x | bash -
+	# Fetch the latest version of NVM dynamically and install it
+	LATEST_NVM_VERSION=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
+	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$LATEST_NVM_VERSION/install.sh | bash
 
-	apt-get update
+	# Load NVM
+	export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+	[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
 
-	sudo apt-get install -y --force-yes nodejs
+	# Install the latest LTS version of Node.js
+	nvm install --lts
 
+	# Use the LTS version
+	nvm use --lts
+
+	# Install global npm packages
 	npm install -g pm2
 	npm install -g gulp
 	npm install -g yarn
@@ -516,6 +574,8 @@ FOE
 
 		_info "Configuring $(pGreen 'PHPRedis')"
 
+		echo "extension=redis.so" >/etc/php/8.4/mods-available/redis.ini
+		echo "extension=redis.so" >/etc/php/8.3/mods-available/redis.ini
 		echo "extension=redis.so" >/etc/php/8.2/mods-available/redis.ini
 		echo "extension=redis.so" >/etc/php/8.1/mods-available/redis.ini
 		echo "extension=redis.so" >/etc/php/8.0/mods-available/redis.ini
@@ -679,11 +739,15 @@ function install_mysql() {
 
 	_info "Configure Access Permissions For Root"
 
-	sed -i '/^bind-address/s/bind-address.*=.*/bind-address = */' /etc/mysql/mysql.conf.d/mysqld.cnf
-	mysql --user="root" --password="root" -e "CREATE USER 'root'@'188.166.106.68' IDENTIFIED BY 'root';"
+	sed -i '/^bind-address/s/bind-address.*=.*/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf
+
+	mysql --user="root" --password="root" -e "CREATE USER 'root'@'localhost' IDENTIFIED BY 'root';"
+	mysql --user="root" --password="root" -e "CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY 'root';"
 	mysql --user="root" --password="root" -e "CREATE USER 'root'@'%' IDENTIFIED BY 'root';"
-	mysql --user="root" --password="root" -e "GRANT ALL PRIVILEGES ON *.* TO root@'188.166.106.68' WITH GRANT OPTION;"
-	mysql --user="root" --password="root" -e "GRANT ALL PRIVILEGES ON *.* TO root@'%' WITH GRANT OPTION;"
+
+	mysql --user="root" --password="root" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
+	mysql --user="root" --password="root" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;"
+	mysql --user="root" --password="root" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;"
 
 	service mysql restart
 

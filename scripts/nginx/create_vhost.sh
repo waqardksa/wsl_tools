@@ -5,96 +5,90 @@ source $parent_path/utilities.sh
 DOMAIN="-----"
 DOMAIN_DIR="-----"
 DOMAIN_TYPE="-----"
-PHP_VER="8.2"
+PHP_VER="8.4"
 
-
-function prepareVhostFilePaths()
-{
+function prepareVhostFilePaths() {
     NGINX_SITES_ENABLED_FILE="${vhosts_en_dir}/${DOMAIN}"
     NGINX_SITES_AVAILABLE_FILE="${vhosts_av_dir}/${DOMAIN}"
 }
 
-function createVhostSymlinks()
-{
+function createVhostSymlinks() {
     _info "$DOMAIN vHost is Created, Do you want to Enable it Now ? (Y/N) : "
     read answer
-        case $answer in
-            y|Y) _success "Enabling $DOMAIN Now ...";;
-            *) _info "EXITING Without Enabling $DOMAIN Now ..."; return 0;;
-        esac
+    case $answer in
+    y | Y) _success "Enabling $DOMAIN Now ..." ;;
+    *)
+        _info "EXITING Without Enabling $DOMAIN Now ..."
+        return 0
+        ;;
+    esac
 
     ln -s "$NGINX_SITES_AVAILABLE_FILE" "$NGINX_SITES_ENABLED_FILE" || _die "Couldn't create symlink to file: ${NGINX_SITES_AVAILABLE_FILE}"
-
 
 }
 
 function ask_domain() {
     pBlue "
     Enter the domain (FQDN) that you want to create a vHost for:  "
-        read DOMAIN
+    read DOMAIN
 
-        if [ "$DOMAIN" == "0" ]; then
-            exit 1;
-        fi
-        
+    if [ "$DOMAIN" == "0" ]; then
+        exit 1
+    fi
+
     if is_Domain_Valid $DOMAIN; then
         if [[ -f "${vhosts_av_dir}/${DOMAIN}" ]]; then
             _error "Vhost file already exists: ${vhosts_av_dir}/${DOMAIN}, Remove it first"
             ask_domain
         else
-            
+
             return 0
         fi
-         
+
     else
-         _error "Comon !!, That's not a VALID domain (FQDN)"
-         ask_domain
-    fi 
+        _error "Comon !!, That's not a VALID domain (FQDN)"
+        ask_domain
+    fi
 }
 
 function ask_dir() {
-    
 
     pBlue "
     Enter root path (e.g. /var/www/html/$DOMAIN) for $(pGreen $DOMAIN) (Enter 0 to Change Domain)::  "
-        read a
+    read a
 
-        case $a in
-		    0) ask_domain ;;
-		    *) DOMAIN_DIR="$a" ;;
-        esac
+    case $a in
+    0) ask_domain ;;
+    *) DOMAIN_DIR="$a" ;;
+    esac
 
     if [[ -z $DOMAIN_DIR || "$DOMAIN_DIR" != /* ]]; then
-        
+
         _error "Root Must be Absolute Path beginning with a /"
-         ask_dir
-         
+        ask_dir
+
     else
         if [[ ! -d "$DOMAIN_DIR" ]]; then
 
-        _error "$DOMAIN_DIR directory doesn't exist. You Want to Continue ? (Y/N) : "
-        read answer
+            _error "$DOMAIN_DIR directory doesn't exist. You Want to Continue ? (Y/N) : "
+            read answer
             case $answer in
-                y|Y) DOMAIN_DIR=$DOMAIN_DIR;;
-                *) ask_dir;;
+            y | Y) DOMAIN_DIR=$DOMAIN_DIR ;;
+            *) ask_dir ;;
             esac
         fi
 
         # Verify the current directory as per application
         _arrow "Verifying the current directory is root of ${DOMAIN_TYPE}..."
         verifyCurrentDirIsAppRoot
-    
-        
+
     fi
 
-    
 }
 
-
 function ask_type() {
-    
 
-echo -ne "
+    echo -ne "
 Choose the type for $(pGreen $DOMAIN) 
 
 $(pGreen '(1)') Laravel ( with /public root)
@@ -110,56 +104,67 @@ $(pGreen '(5)') NuxtJs (SSR with NodeJS)
 $(pGreen '(0)') << Change Directory Name
 -----------------------------------
 $(pBlue ':: PHPTools :: Choose an option:') "
-        read a
+    read a
 
-        case $a in
-	        1) DOMAIN_TYPE="laravel" ;;
-	        2) DOMAIN_TYPE="php" ;;
-	        3) DOMAIN_TYPE="static" ;;
-	        4) DOMAIN_TYPE="vue" ;;
-	        5) DOMAIN_TYPE="nuxt" ;;
-		    0) ask_dir ;;
-		    *) _error "Wrong Choice !!"; ask_type;;
-        esac
+    case $a in
+    1) DOMAIN_TYPE="laravel" ;;
+    2) DOMAIN_TYPE="php" ;;
+    3) DOMAIN_TYPE="static" ;;
+    4) DOMAIN_TYPE="vue" ;;
+    5) DOMAIN_TYPE="nuxt" ;;
+    0) ask_dir ;;
+    *)
+        _error "Wrong Choice !!"
+        ask_type
+        ;;
+    esac
 
 }
 
 function ask_php() {
-	
+
     echo -ne "
 "
-pTan "== Which PHP Version would you like for vHost $(pGreen $DOMAIN)? ==
+    pTan "== Which PHP Version would you like for vHost $(pGreen $DOMAIN)? ==
 
 "
 
-echo -ne "
-$(pGreen '(1)') 8.2
-$(pGreen '(2)') 8.1
-$(pGreen '(3)') 8.0
-$(pGreen '(4)') 7.4
-$(pGreen '(5)') 7.3
-$(pGreen '(6)') 7.2
-$(pGreen '(7)') 7.1
-$(pGreen '(8)') 7.0
-$(pGreen '(9)') 5.6
+    echo -ne "
+$(pGreen '(1)') 8.4
+$(pGreen '(2)') 8.3
+$(pGreen '(3)') 8.2
+$(pGreen '(4)') 8.1
+$(pGreen '(5)') 8.0
+$(pGreen '(6)') 7.4
+$(pGreen '(7)') 7.3
+$(pGreen '(8)') 7.2
+$(pGreen '(9)') 7.1
+$(pGreen '(10)') 7.0
+$(pGreen '(11)') 5.6
 
 $(pGreen '(0)') << Go Back to Directory Step
 -----------------------------------
 $(pBlue ':: Choose an option:  ') "
-        read a
-        case $a in
-	        1) PHP_VER="8.2";;
-	        2) PHP_VER="8.1";;
-	        3) PHP_VER="8.0";;
-	        4) PHP_VER="7.4";;
-	        5) PHP_VER="7.3";;
-	        6) PHP_VER="7.2";;
-	        7) PHP_VER="7.1";;
-	        8) PHP_VER="7.0";;
-	        9) PHP_VER="5.6";;
-		    0) ask_dir ;;
-		    *) _error "Wrong Choice !!";_continue; ask_php;;
-        esac
+    read a
+    case $a in
+    1) PHP_VER="8.4" ;;
+    2) PHP_VER="8.3" ;;
+    3) PHP_VER="8.2" ;;
+    4) PHP_VER="8.1" ;;
+    5) PHP_VER="8.0" ;;
+    6) PHP_VER="7.4" ;;
+    7) PHP_VER="7.3" ;;
+    8) PHP_VER="7.2" ;;
+    9) PHP_VER="7.1" ;;
+    10) PHP_VER="7.0" ;;
+    11) PHP_VER="5.6" ;;
+    0) ask_dir ;;
+    *)
+        _error "Wrong Choice !!"
+        _continue
+        ask_php
+        ;;
+    esac
 
 }
 
@@ -171,22 +176,20 @@ function create_vhost_file() {
     prepareAppVhostContent
     createVhostSymlinks
 
-    if nginx -t > /dev/null 2>&1; then
-       _success "Nginx Conf is Valid & Successful"
+    if nginx -t >/dev/null 2>&1; then
+        _success "Nginx Conf is Valid & Successful"
     fi
-    
 
     _arrow "Restarting Nginx and PHP"
 
-_restart_nginx_php
+    _restart_nginx_php
 
     printSuccessMessage
 
     _continue
 }
 
-function prepareAppVhostContent()
-{
+function prepareAppVhostContent() {
     if [[ "$DOMAIN_TYPE" = 'laravel' || "$DOMAIN_TYPE" = 'php' ]]; then
         preparePHPVhostContent
     elif [[ "$DOMAIN_TYPE" = 'static' || "$DOMAIN_TYPE" = 'vue' ]]; then
@@ -197,8 +200,8 @@ function prepareAppVhostContent()
 }
 
 function preparePHPVhostContent() {
- 
- echo "server {
+
+    echo "server {
     listen     80;             # the port nginx is listening on
     server_name ${DOMAIN};
     root ${DOMAIN_DIR};
@@ -234,14 +237,14 @@ function preparePHPVhostContent() {
     location ~ /\.(?!well-known).* {
         deny all;
     }
-}" > "$NGINX_SITES_AVAILABLE_FILE" || _die "Couldn't write to file: ${NGINX_SITES_AVAILABLE_FILE}"
+}" >"$NGINX_SITES_AVAILABLE_FILE" || _die "Couldn't write to file: ${NGINX_SITES_AVAILABLE_FILE}"
 
     _arrow "${NGINX_SITES_AVAILABLE_FILE} file has been created."
 }
 
 function prepareStaticVhostContent() {
- 
- echo "server {
+
+    echo "server {
     listen     80;             # the port nginx is listening on
     server_name ${DOMAIN};
     server_tokens off;
@@ -277,15 +280,14 @@ function prepareStaticVhostContent() {
     location ~ /\.(?!well-known).* {
         deny all;
     }
-}" > "$NGINX_SITES_AVAILABLE_FILE" || _die "Couldn't write to file: ${NGINX_SITES_AVAILABLE_FILE}"
+}" >"$NGINX_SITES_AVAILABLE_FILE" || _die "Couldn't write to file: ${NGINX_SITES_AVAILABLE_FILE}"
 
     _arrow "${NGINX_SITES_AVAILABLE_FILE} file has been created."
 }
 
-function prepareNuxtSSRVhostContent()
-{
- 
- echo "
+function prepareNuxtSSRVhostContent() {
+
+    echo "
 map \$sent_http_content_type \$expires {
     \"text/html\"                 epoch;
     \"text/html; charset=utf-8\"  epoch;
@@ -344,15 +346,13 @@ server {
     }
 }
 
-" > "$NGINX_SITES_AVAILABLE_FILE" || _die "Couldn't write to file: ${NGINX_SITES_AVAILABLE_FILE}"
+" >"$NGINX_SITES_AVAILABLE_FILE" || _die "Couldn't write to file: ${NGINX_SITES_AVAILABLE_FILE}"
 
     _arrow "${NGINX_SITES_AVAILABLE_FILE} file has been created."
 }
 
-
-
-menu(){
-echo -ne "
+menu() {
+    echo -ne "
 
 $(_underline '### NGINX Tools  ###')
 
@@ -364,17 +364,25 @@ $(pGreen '(4)') Disable a vHost
 $(pGreen '(0)') << Go Back to MainMenu
 -----------------------------------
 $(pBlue ':: NGINX Tools :: Choose an option:') "
-        read a
-        case $a in
-	        1) create_vhost ; menu ;;
-	        2) change_vhost_menu ; menu ;;
-		    0) exit 0 ;;
-		    *) _error "Wrong Choice !!"; menu;;
-        esac
+    read a
+    case $a in
+    1)
+        create_vhost
+        menu
+        ;;
+    2)
+        change_vhost_menu
+        menu
+        ;;
+    0) exit 0 ;;
+    *)
+        _error "Wrong Choice !!"
+        menu
+        ;;
+    esac
 }
 
-function verifyCurrentDirIsAppRoot()
-{
+function verifyCurrentDirIsAppRoot() {
     if [[ "$DOMAIN_TYPE" = 'laravel' ]]; then
         verifyCurrentDirIsLaravelRoot
     elif [[ "$DOMAIN_TYPE" = 'vue' ]]; then
@@ -382,53 +390,60 @@ function verifyCurrentDirIsAppRoot()
     fi
 }
 
-function verifyCurrentDirIsLaravelRoot()
-{
+function verifyCurrentDirIsLaravelRoot() {
     if [[ ! -f "$DOMAIN_DIR/bootstrap/app.php" && "$DOMAIN_DIR" != *public ]]; then
         _error "$DOMAIN_DIR doesn't seem like Laravel Root & it also Doesn't end with /public, Should We Add /public at the end? (Y/N)"
         read a
         case $a in
-	        y|Y) _success "OK, Making it $DOMAIN_DIR/public"; makeLaravelPublicWithPermissions;;
-	        n|N) _info "OK, We will add it in vHost conf as $DOMAIN_DIR"; DOMAIN_DIR="$DOMAIN_DIR";;
-	        *) ask_dir;;
+        y | Y)
+            _success "OK, Making it $DOMAIN_DIR/public"
+            makeLaravelPublicWithPermissions
+            ;;
+        n | N)
+            _info "OK, We will add it in vHost conf as $DOMAIN_DIR"
+            DOMAIN_DIR="$DOMAIN_DIR"
+            ;;
+        *) ask_dir ;;
         esac
     else
-    
-    makeLaravelPublicWithPermissions
+
+        makeLaravelPublicWithPermissions
 
     fi
 }
 
-function makeLaravelPublicWithPermissions()
-{
+function makeLaravelPublicWithPermissions() {
     _info "$DOMAIN_DIR is considered a Laravel Root, making it $DOMAIN_DIR/public"
 
     _info "Fixing Permissions on $DOMAIN_DIR/storage and $DOMAIN_DIR/bootstrap/cache"
-    
+
     sudo chown -R $USER:www-data $DOMAIN_DIR/storage
     sudo chown -R $USER:www-data $DOMAIN_DIR/bootstrap/cache
     sudo chmod -R 775 $DOMAIN_DIR/storage
     sudo chmod -R 775 $DOMAIN_DIR/bootstrap/cache
 
-    
     DOMAIN_DIR="$DOMAIN_DIR/public"
 }
 
-function verifyCurrentDirIsVueRoot()
-{
+function verifyCurrentDirIsVueRoot() {
     if [[ "$DOMAIN_DIR" != *dist ]]; then
         _error "You chose 'VUE/NUXT Generated' but Your vHost root doesn't end with /dist, Should we add /dist at the end? (Y/N)"
         read a
         case $a in
-	        y|Y) _success "OK, Making it $DOMAIN_DIR/dist"; DOMAIN_DIR="$DOMAIN_DIR/dist";;
-	        n|N) _info "OK, We will add it in vHost conf as $DOMAIN_DIR"; DOMAIN_DIR="$DOMAIN_DIR";;
-	        *) ask_dir;;
+        y | Y)
+            _success "OK, Making it $DOMAIN_DIR/dist"
+            DOMAIN_DIR="$DOMAIN_DIR/dist"
+            ;;
+        n | N)
+            _info "OK, We will add it in vHost conf as $DOMAIN_DIR"
+            DOMAIN_DIR="$DOMAIN_DIR"
+            ;;
+        *) ask_dir ;;
         esac
     fi
 }
 
-function printSuccessMessage()
-{
+function printSuccessMessage() {
     _success "Virtual host for Nginx has been successfully created!"
 
     echo "################################################################"
@@ -445,9 +460,6 @@ function printSuccessMessage()
 
 }
 
-
-
-
 _info "================================"
 
 ask_domain
@@ -460,17 +472,13 @@ _info "================================"
 
 ask_dir
 
- if [[ "$DOMAIN_TYPE" = 'laravel' || "$DOMAIN_TYPE" = 'php' ]]; then
+if [[ "$DOMAIN_TYPE" = 'laravel' || "$DOMAIN_TYPE" = 'php' ]]; then
 
-_info "================================"
+    _info "================================"
 
-ask_php
+    ask_php
 
 fi
-
-
-
-
 
 _info "================================"
 
