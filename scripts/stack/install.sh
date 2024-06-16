@@ -9,7 +9,7 @@ menu() {
 
 $(pGreen 'OK, This will install the following stuff:')
 
-$(pGreen '*)') PHP with Essential Extensions (from 8.2 to 5.6)
+$(pGreen '*)') PHP with Essential Extensions (from 8.4 to 5.6)
 
 $(pGreen '*)') Composer (PHP Package Manager)
 
