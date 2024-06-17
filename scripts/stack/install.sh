@@ -9,7 +9,7 @@ menu() {
 
 $(pGreen 'OK, This will install the following stuff:')
 
-$(pGreen '*)') PHP with Essential Extensions (from 8.4 to 5.6)
+$(pGreen '*)') PHP with Essential Extensions (from 8.3 to 5.6)
 
 $(pGreen '*)') Composer (PHP Package Manager)
 
@@ -139,7 +139,6 @@ function continue_install() {
 
 #Auto Starting services
 sudo /etc/init.d/nginx start
-sudo /etc/init.d/php8.4-fpm start
 sudo /etc/init.d/php8.3-fpm start
 sudo /etc/init.d/php8.2-fpm start
 sudo /etc/init.d/php8.1-fpm start
@@ -158,7 +157,6 @@ FOE
 		_info "Removing Password Requirements from Services"
 
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/nginx' | sudo EDITOR='tee -a' visudo
-		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.4-fpm' | sudo EDITOR='tee -a' visudo
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.3-fpm' | sudo EDITOR='tee -a' visudo
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.2-fpm' | sudo EDITOR='tee -a' visudo
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.1-fpm' | sudo EDITOR='tee -a' visudo
@@ -178,15 +176,6 @@ FOE
 	else
 		_info "Blank or User $user_reloader Not Found, Moving On ..."
 	fi
-
-	_info "Installing PHP $(pGreen 8.4) with Extensions"
-
-	apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y --force-yes php8.4-cli php8.4-fpm php8.4-dev \
-		php8.4-pgsql php8.4-sqlite3 php8.4-gd \
-		php8.4-curl php8.4-memcached \
-		php8.4-imap php8.4-mysql php8.4-mbstring \
-		php8.4-xml php8.4-zip php8.4-bcmath php8.4-soap \
-		php8.4-intl php8.4-readline php8.4-msgpack php8.4-igbinary php8.4-gmp php8.4-redis
 
 	_info "Installing PHP $(pGreen 8.3) with Extensions"
 
@@ -288,12 +277,6 @@ FOE
 
 	_info "Doing Misc. PHP CLI Configuration"
 
-	sudo sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.4/cli/php.ini
-	sudo sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.4/cli/php.ini
-	sudo sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.4/cli/php.ini
-	sudo sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.4/cli/php.ini
-	sudo sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.4/cli/php.ini
-
 	sudo sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.3/cli/php.ini
 	sudo sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.3/cli/php.ini
 	sudo sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.3/cli/php.ini
@@ -358,7 +341,6 @@ FOE
 
 	apt-get install -y --force-yes libmagickwand-dev
 
-	echo "extension=imagick.so" >/etc/php/8.4/mods-available/imagick.ini
 	echo "extension=imagick.so" >/etc/php/8.3/mods-available/imagick.ini
 	echo "extension=imagick.so" >/etc/php/8.2/mods-available/imagick.ini
 	echo "extension=imagick.so" >/etc/php/8.1/mods-available/imagick.ini
@@ -377,21 +359,15 @@ FOE
 	chmod 733 /var/lib/php/sessions
 	chmod +t /var/lib/php/sessions
 
-	_info "Making PHP $(pGreen '8.4') default in CLI"
+	_info "Making PHP $(pGreen '8.3') default in CLI"
 
-	sudo update-alternatives --set php /usr/bin/php8.4
+	sudo update-alternatives --set php /usr/bin/php8.3
 
 	_info "Enough of PHP Stuff, Now Installing $(pGreen 'NGINX')"
 
 	apt-get install -y --force-yes nginx
 
 	_info "Tweaking Some PHP-FPM Settings"
-
-	sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.4/fpm/php.ini
-	sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.4/fpm/php.ini
-	sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.4/fpm/php.ini
-	sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.4/fpm/php.ini
-	sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.4/fpm/php.ini
 
 	sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.3/fpm/php.ini
 	sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.3/fpm/php.ini
@@ -518,26 +494,16 @@ FOE
 	# func from utilities
 	_restart_nginx_php
 
-	_info "Installing NodeJS, NPM, Yarn using NVM"
+	_info "Installing NodeJS, NPM, Yarn"
 
-	# Ensure apt-get is ready to use
 	apt_wait
 
-	# Fetch the latest version of NVM dynamically and install it
-	LATEST_NVM_VERSION=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
-	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$LATEST_NVM_VERSION/install.sh | bash
+	curl --silent --location https://deb.nodesource.com/setup_20.x | bash -
 
-	# Load NVM
-	export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-	[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+	apt-get update
 
-	# Install the latest LTS version of Node.js
-	nvm install --lts
+	sudo apt-get install -y --force-yes nodejs
 
-	# Use the LTS version
-	nvm use --lts
-
-	# Install global npm packages
 	npm install -g pm2
 	npm install -g gulp
 	npm install -g yarn
@@ -574,7 +540,6 @@ FOE
 
 		_info "Configuring $(pGreen 'PHPRedis')"
 
-		echo "extension=redis.so" >/etc/php/8.4/mods-available/redis.ini
 		echo "extension=redis.so" >/etc/php/8.3/mods-available/redis.ini
 		echo "extension=redis.so" >/etc/php/8.2/mods-available/redis.ini
 		echo "extension=redis.so" >/etc/php/8.1/mods-available/redis.ini
@@ -709,8 +674,8 @@ function install_mysql() {
 	dpkg --install mysql-apt-config_0.8.15-1_all.deb
 
 	debconf-set-selections <<<"mysql-community-server mysql-community-server/data-dir select ''"
-	debconf-set-selections <<<"mysql-community-server mysql-community-server/root-pass password root"
-	debconf-set-selections <<<"mysql-community-server mysql-community-server/re-root-pass password root"
+	debconf-set-selections <<<"mysql-community-server mysql-community-server/root-pass password toor"
+	debconf-set-selections <<<"mysql-community-server mysql-community-server/re-root-pass password toor"
 
 	apt-get update
 
@@ -741,17 +706,17 @@ function install_mysql() {
 
 	sed -i '/^bind-address/s/bind-address.*=.*/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf
 
-	mysql --user="root" --password="root" -e "CREATE USER 'root'@'localhost' IDENTIFIED BY 'root';"
-	mysql --user="root" --password="root" -e "CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY 'root';"
-	mysql --user="root" --password="root" -e "CREATE USER 'root'@'%' IDENTIFIED BY 'root';"
+	mysql --user="root" --password="toor" -e "CREATE USER 'root'@'localhost' IDENTIFIED BY 'toor';"
+	mysql --user="root" --password="toor" -e "CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY 'toor';"
+	mysql --user="root" --password="toor" -e "CREATE USER 'root'@'%' IDENTIFIED BY 'toor';"
 
-	mysql --user="root" --password="root" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
-	mysql --user="root" --password="root" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;"
-	mysql --user="root" --password="root" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;"
+	mysql --user="root" --password="toor" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
+	mysql --user="root" --password="toor" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;"
+	mysql --user="root" --password="toor" -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;"
 
 	service mysql restart
 
-	mysql --user="root" --password="root" -e "FLUSH PRIVILEGES;"
+	mysql --user="root" --password="toor" -e "FLUSH PRIVILEGES;"
 
 	# Create The Initial Database If Specified
 
