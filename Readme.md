@@ -1,11 +1,11 @@
 # WSL Tools for Easy Dev Environment
 
-**This script only works on Ubuntu 22.04, 20.04 and 18.04**
+**This script only works on Ubuntu 24.04, 22.04, 20.04 and 18.04**
 
 Features of this Tools:
 
 * **Install Stacks in 1 Step**
-    * PHP - All Versions (8.2, 8.1, 8.0, 7.4, 7.3, 7.2, 7.1, 7.0, 5.6)
+    * PHP - All Versions (8.4, 8.3, 8.2, 8.1, 8.0, 7.4, 7.3, 7.2, 7.1, 7.0, 5.6)
     * Composer
     * Nginx
     * MariaDB 10.6 or MYSQL 8.0
@@ -30,7 +30,7 @@ Features of this Tools:
 
 2. Clone this Repo:
 
-    `sudo git clone https://github.com/aleedhillon/wsl_tools.git`
+    `sudo git clone https://github.com/waqardksa/wsl_tools.git`
 
 3. Chmod recursively to make all files executeable in Repo.
 
