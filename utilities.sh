@@ -154,16 +154,16 @@ function _ubuntu_only() {
 
     if _isOsDebian; then
 
-        if [[ "$UBUNTU_VERSION" != "22.04" && "$UBUNTU_VERSION" != "20.04" && "$UBUNTU_VERSION" != "18.04" ]];
+        if [[ "$UBUNTU_VERSION" != "24.04" && "$UBUNTU_VERSION" != "22.04" && "$UBUNTU_VERSION" != "20.04" && "$UBUNTU_VERSION" != "18.04" ]];
         then
 
-        _die "This Script is Only for Ubuntu 22.04 or 20.04 or 18.04, SORRY, BYEEEE"
+        _die "This Script is Only for Ubuntu 24.04 or 22.04 or 20.04 or 18.04, SORRY, BYEEEE"
         
 
         fi
 
     else
-         _die "This Script is Only for Debian Ubuntu 22.04 or 20.04 or 18.04, SORRY, BYEEEE"
+         _die "This Script is Only for Debian Ubuntu 24.04 or 22.04 or 20.04 or 18.04, SORRY, BYEEEE"
     fi
     
 
@@ -174,6 +174,14 @@ function _checking_all() {
     _arrow "Checking PHP CLI"
 
 _check "php -v";
+
+_arrow "Checking PHP-FPM 8.4"
+
+_check "service php8.4-fpm status";
+
+_arrow "Checking PHP-FPM 8.3"
+
+_check "service php8.3-fpm status";
 
 _arrow "Checking PHP-FPM 8.2"
 
@@ -350,9 +358,11 @@ function _restart_nginx_php () {
 
 if [ ! -z "\$(ps aux | grep php-fpm | grep -v grep)" ]
 then
-	service php8.2-fpm start > /dev/null 2>&1	
-	service php8.1-fpm start > /dev/null 2>&1	
-	service php8.0-fpm start > /dev/null 2>&1	
+	service php8.4-fpm start > /dev/null 2>&1
+	service php8.3-fpm start > /dev/null 2>&1
+	service php8.2-fpm start > /dev/null 2>&1
+    service php8.1-fpm start > /dev/null 2>&1
+    service php8.0-fpm start > /dev/null 2>&1
     service php7.4-fpm start > /dev/null 2>&1
     service php7.3-fpm start > /dev/null 2>&1
     service php7.2-fpm start > /dev/null 2>&1
@@ -361,6 +371,8 @@ then
     service php5.6-fpm start > /dev/null 2>&1
     service php5-fpm start > /dev/null 2>&1
 
+    service php8.4-fpm restart > /dev/null 2>&1
+    service php8.3-fpm restart > /dev/null 2>&1
     service php8.2-fpm restart > /dev/null 2>&1
     service php8.1-fpm restart > /dev/null 2>&1
     service php8.0-fpm restart > /dev/null 2>&1

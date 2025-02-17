@@ -9,7 +9,7 @@ menu() {
 
 $(pGreen 'OK, This will install the following stuff:')
 
-$(pGreen '*)') PHP with Essential Extensions (from 8.3 to 5.6)
+$(pGreen '*)') PHP with Essential Extensions (from 8.4 to 5.6)
 
 $(pGreen '*)') Composer (PHP Package Manager)
 
@@ -139,6 +139,7 @@ function continue_install() {
 
 #Auto Starting services
 sudo /etc/init.d/nginx start
+sudo /etc/init.d/php8.4-fpm start
 sudo /etc/init.d/php8.3-fpm start
 sudo /etc/init.d/php8.2-fpm start
 sudo /etc/init.d/php8.1-fpm start
@@ -157,6 +158,7 @@ FOE
 		_info "Removing Password Requirements from Services"
 
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/nginx' | sudo EDITOR='tee -a' visudo
+		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.4-fpm' | sudo EDITOR='tee -a' visudo
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.3-fpm' | sudo EDITOR='tee -a' visudo
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.2-fpm' | sudo EDITOR='tee -a' visudo
 		echo '%sudo   ALL=NOPASSWD: /etc/init.d/php8.1-fpm' | sudo EDITOR='tee -a' visudo
@@ -175,6 +177,19 @@ FOE
 
 	else
 		_info "Blank or User $user_reloader Not Found, Moving On ..."
+	fi
+
+	_info "Installing PHP $(pGreen 8.4) with Extensions"
+
+	if apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y --force-yes php8.4-cli php8.4-fpm php8.4-dev \
+		php8.4-pgsql php8.4-sqlite3 php8.4-gd \
+		php8.4-curl php8.4-memcached \
+		php8.4-imap php8.4-mysql php8.4-mbstring \
+		php8.4-xml php8.4-zip php8.4-bcmath php8.4-soap \
+		php8.4-intl php8.4-readline php8.4-msgpack php8.4-igbinary php8.4-gmp php8.4-redis; then
+		_success "PHP 8.4 installed successfully"
+	else
+		_warning "PHP 8.4 installation failed (may not be available yet), continuing with PHP 8.3"
 	fi
 
 	_info "Installing PHP $(pGreen 8.3) with Extensions"
@@ -277,6 +292,14 @@ FOE
 
 	_info "Doing Misc. PHP CLI Configuration"
 
+	if [ -f /etc/php/8.4/cli/php.ini ]; then
+		sudo sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.4/cli/php.ini
+		sudo sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.4/cli/php.ini
+		sudo sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.4/cli/php.ini
+		sudo sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.4/cli/php.ini
+		sudo sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.4/cli/php.ini
+	fi
+
 	sudo sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.3/cli/php.ini
 	sudo sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.3/cli/php.ini
 	sudo sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.3/cli/php.ini
@@ -341,33 +364,39 @@ FOE
 
 	apt-get install -y --force-yes libmagickwand-dev
 
-	echo "extension=imagick.so" >/etc/php/8.3/mods-available/imagick.ini
-	echo "extension=imagick.so" >/etc/php/8.2/mods-available/imagick.ini
-	echo "extension=imagick.so" >/etc/php/8.1/mods-available/imagick.ini
-	echo "extension=imagick.so" >/etc/php/8.0/mods-available/imagick.ini
-	echo "extension=imagick.so" >/etc/php/7.4/mods-available/imagick.ini
-	echo "extension=imagick.so" >/etc/php/7.3/mods-available/imagick.ini
-	echo "extension=imagick.so" >/etc/php/7.2/mods-available/imagick.ini
-	echo "extension=imagick.so" >/etc/php/7.1/mods-available/imagick.ini
-	echo "extension=imagick.so" >/etc/php/7.0/mods-available/imagick.ini
-	echo "extension=imagick.so" >/etc/php/5.6/mods-available/imagick.ini
-
-	yes '' | apt install php-imagick
+	if [ -d /etc/php/8.4/mods-available ]; then
+		echo "extension=imagick.so" >/etc/php/8.4/mods-available/imagick.ini
+		echo "extension=redis.so" >/etc/php/8.4/mods-available/redis.ini
+	fi
 
 	_info "Configure Sessions Directory Permissions"
 
 	chmod 733 /var/lib/php/sessions
 	chmod +t /var/lib/php/sessions
 
-	_info "Making PHP $(pGreen '8.3') default in CLI"
+	_info "Setting default PHP version"
 
-	sudo update-alternatives --set php /usr/bin/php8.3
+	if [ -f /usr/bin/php8.4 ]; then
+		_info "Making PHP $(pGreen '8.4') default in CLI"
+		sudo update-alternatives --set php /usr/bin/php8.4
+	else
+		_info "Making PHP $(pGreen '8.3') default in CLI"
+		sudo update-alternatives --set php /usr/bin/php8.3
+	fi
 
 	_info "Enough of PHP Stuff, Now Installing $(pGreen 'NGINX')"
 
 	apt-get install -y --force-yes nginx
 
 	_info "Tweaking Some PHP-FPM Settings"
+
+	if [ -f /etc/php/8.4/fpm/php.ini ]; then
+		sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.4/fpm/php.ini
+		sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.4/fpm/php.ini
+		sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/8.4/fpm/php.ini
+		sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.4/fpm/php.ini
+		sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/8.4/fpm/php.ini
+	fi
 
 	sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/8.3/fpm/php.ini
 	sed -i "s/display_errors = .*/display_errors = On/" /etc/php/8.3/fpm/php.ini
@@ -540,6 +569,7 @@ FOE
 
 		_info "Configuring $(pGreen 'PHPRedis')"
 
+		echo "extension=redis.so" >/etc/php/8.4/mods-available/redis.ini
 		echo "extension=redis.so" >/etc/php/8.3/mods-available/redis.ini
 		echo "extension=redis.so" >/etc/php/8.2/mods-available/redis.ini
 		echo "extension=redis.so" >/etc/php/8.1/mods-available/redis.ini
@@ -612,18 +642,14 @@ function install_mariadb() {
 	sudo apt-get install software-properties-common
 	sudo apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
 
-	if [[ "$UBUNTU_VERSION" == "22.04" ]]; then
-
+	if [[ "$UBUNTU_VERSION" == "24.04" ]]; then
+		sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://mirrors.coreix.net/mariadb/repo/10.6/ubuntu noble main'
+	elif [[ "$UBUNTU_VERSION" == "22.04" ]]; then
 		sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://mirrors.coreix.net/mariadb/repo/10.6/ubuntu jammy main'
-
 	elif [[ "$UBUNTU_VERSION" == "20.04" ]]; then
-
 		sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://mirrors.coreix.net/mariadb/repo/10.6/ubuntu focal main'
-
 	elif [[ "$UBUNTU_VERSION" == "18.04" ]]; then
-
 		sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://mirrors.coreix.net/mariadb/repo/10.6/ubuntu bionic main'
-
 	fi
 
 	export DEBIAN_FRONTEND=noninteractive
