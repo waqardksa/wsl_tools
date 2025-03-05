@@ -364,9 +364,28 @@ FOE
 
 	apt-get install -y --force-yes libmagickwand-dev
 
-	if [ -d /etc/php/8.4/mods-available ]; then
-		echo "extension=imagick.so" >/etc/php/8.4/mods-available/imagick.ini
-		echo "extension=redis.so" >/etc/php/8.4/mods-available/redis.ini
+	# Install and configure Imagick for all PHP versions
+	yes '' | pecl install -f imagick
+	
+	if pecl list | grep imagick >/dev/null 2>&1; then
+		_info "Configuring $(pGreen 'Imagick') for all PHP versions"
+		
+		if [ -d /etc/php/8.4/mods-available ]; then
+			echo "extension=imagick.so" >/etc/php/8.4/mods-available/imagick.ini
+		fi
+		echo "extension=imagick.so" >/etc/php/8.3/mods-available/imagick.ini
+		echo "extension=imagick.so" >/etc/php/8.2/mods-available/imagick.ini
+		echo "extension=imagick.so" >/etc/php/8.1/mods-available/imagick.ini
+		echo "extension=imagick.so" >/etc/php/8.0/mods-available/imagick.ini
+		echo "extension=imagick.so" >/etc/php/7.4/mods-available/imagick.ini
+		echo "extension=imagick.so" >/etc/php/7.3/mods-available/imagick.ini
+		echo "extension=imagick.so" >/etc/php/7.2/mods-available/imagick.ini
+		echo "extension=imagick.so" >/etc/php/7.1/mods-available/imagick.ini
+		echo "extension=imagick.so" >/etc/php/7.0/mods-available/imagick.ini
+		echo "extension=imagick.so" >/etc/php/5.6/mods-available/imagick.ini
+		
+		# Enable the extension for all PHP versions
+		phpenmod -v ALL imagick
 	fi
 
 	_info "Configure Sessions Directory Permissions"
